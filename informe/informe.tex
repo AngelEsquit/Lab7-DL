@@ -3,7 +3,7 @@
 \usepackage[T1]{fontenc}
 \usepackage{lmodern}
 \usepackage[spanish,es-nodecimaldot]{babel}
-\usepackage[margin=1.55cm,top=1.4cm,bottom=1.5cm]{geometry}
+\usepackage[a4paper,margin=2.5cm]{geometry}
 \usepackage{booktabs,graphicx,amsmath,amssymb,float}
 \usepackage[expansion=false]{microtype}
 \usepackage[font=footnotesize,labelfont=bf,skip=2pt]{caption}
@@ -22,9 +22,12 @@
 \begin{document}
 \pagestyle{plain}
 
-{\large\bfseries CC3092 -- Deep Learning y Sistemas Inteligentes \hfill Laboratorio \#7}\\[1pt]
-{\small NLP end-to-end y Embeddings \hfill Angel Esteban Esquit Hernández}
-\vspace{2pt}\hrule\vspace{3pt}
+\begin{center}
+{\LARGE\bfseries Laboratorio \#7: NLP end-to-end y Embeddings}\\[5pt]
+{\large CC3092 -- Deep Learning y Sistemas Inteligentes}\\[5pt]
+{\normalsize Angel Esteban Esquit Hernández}
+\end{center}
+\vspace{2pt}
 
 \section{Investigación: embeddings en PyTorch y gensim}
 \textbf{\texttt{nn.Embedding(num\_embeddings, embedding\_dim, padding\_idx, max\_norm, sparse)}} es una tabla de búsqueda entrenable de forma $(V,d)$ que mapea IDs enteros a vectores (equivale a multiplicar un one-hot por la matriz, sin construirlo). \texttt{padding\_idx} reserva una fila (inicializada en ceros) que no recibe gradiente; \texttt{sparse=True} produce gradientes dispersos (solo las filas usadas), útil con vocabularios grandes pero compatible solo con \texttt{SGD}, \texttt{SparseAdam} y \texttt{Adagrad}; \texttt{max\_norm} renormaliza las filas consultadas. \textbf{\texttt{nn.Embedding.from\_pretrained(E, freeze=True)}} crea la capa desde una matriz ya entrenada: con \texttt{freeze=True} los pesos quedan congelados (\texttt{requires\_grad=False}), con \texttt{False} se permite \textit{fine-tuning}.
@@ -103,5 +106,5 @@ La matriz de confusión de cada modelo está en el notebook (secc.~6.2). SimLex-
 \textbf{Aritmética vectorial.} Se cumple de forma \textit{aproximada y desigual}: SGNS acierta 47.3\,\% del benchmark (GloVe 66.0\,\%), con éxito alto en relaciones frecuentes y regulares (nacionalidad 83.7\,\%, capitales comunes 71.3\,\%, pasado 66.0\,\%) y fallas en \textit{currency} (0\,\%, solo 70 preguntas cubiertas), \textit{opposite} (9.2\,\%), adjetivo$\to$adverbio (15.4\,\%) y \textit{city-in-state} (29.5\,\%). Las sintácticas superan a las semánticas (49.0 vs.\ 43.3\,\%; GloVe 68.3 vs.\ 60.6\,\%), aunque el grupo semántico incluye las categorías más difíciles. \par\smallskip\textbf{¿Es ``$\approx$'' una igualdad? No:} sin excluir la consulta, el vector resultante cae sobre $c$ o $b$ en $\sim$74\,\% de los casos del SGNS; la respuesta correcta tiene coseno medio $\approx$0.69 (no 1) y los vectores diferencia de una misma relación solo comparten dirección parcialmente (coseno 0.23--0.41, frente a 1 si fuese igualdad exacta). \par\smallskip\textbf{Brecha con GloVe} ($-18.7$ puntos en analogías, pero WordSim-353 0.689 vs.\ 0.533 y SimLex empatado): GloVe usó $\approx$203$\times$ más tokens y otro dominio. El Word2Vec de gensim con nuestro corpus obtiene lo mismo que nuestro SGNS (45.6\,\%), por lo que la diferencia no es de implementación; el experimento de corpus (25/50/100\,\%: 24.3/36.1/47.3\,\%, $\approx$+11.5 puntos por duplicación sin saturar; WikiText completo daría $\approx$+20 puntos por extrapolación lineal, que sobreestima) indica que \textit{la mayor parte} de la brecha es tamaño de corpus, aunque no podemos aislar el efecto del método porque no entrenamos GloVe sobre nuestro corpus.
 \par\smallskip\textbf{SGNS vs.\ gensim:} comportamiento similar (analogías 47.3 vs.\ 45.6\,\%, WS-353 0.689 vs.\ 0.686); la diferencia semántica (43.3 vs.\ 37.3\,\%) puede deberse al optimizador (SparseAdam con batch 16\,384 vs.\ SGD por par), a la inicialización y a un sesgo de selección (configuración elegida entre 9 corridas con la misma métrica; una sola semilla). \par\smallskip\textbf{Hiperparámetros:} $d$: 50/100/300 $\Rightarrow$ 35.5/47.3/49.1\,\% (d=300 gana en semántica, 56.7\,\%, y pierde en sintaxis y similitud; 2.4$\times$ más tiempo); ventana: las pequeñas favorecen la sintaxis (brecha sintáctica$-$semántica 10.8, 5.7 y 3.1 puntos para $W{=}2,5,10$) y las grandes la semántica ($W{=}10$ cuesta 1.8$\times$); $K{=}15$ mejora las analogías (48.8\,\%) pero empeora WordSim (0.671) y cuesta 1.7$\times$; $t{=}10^{-5}$ descarta demasiado (41.5\,\%). \par\smallskip\textbf{AG News:} con todos los datos, TF-IDF (.926) $\ge$ GloVe (.921) $>$ SGNS (.915) $\approx$ gensim (.914) $>$ aleatorio (.908): los preentrenados superan a los aleatorios (+1.3 y +0.7 puntos) pero no a TF-IDF con bigramas, que conserva información de orden que el promedio pierde (la diferencia de 0.5 puntos es del orden del error estándar, $\approx$0.3). Con \textbf{1\,\%} de los datos (1\,080 noticias) la ventaja es clara: GloVe .865, SGNS .857, gensim .848, TF-IDF .812, aleatorio \textbf{.515}; TF-IDF empata o gana desde $\approx$25\,\%. \textbf{Congelar} convino con el 1\,\% (GloVe .872 vs.\ .854 en validación con fine-tuning, que sobreajusta); desde el 5\,\% el \textbf{fine-tuning} gana (+1.2 puntos en GloVe y +2.1 en SGNS con el 100\,\%). \par\smallskip\textbf{Limitaciones:} una semilla, subconjunto de 29.6\,M de los 97.5\,M de tokens, búsqueda de hiperparámetros de una variable a la vez.
 
-\vspace{3pt}\textbf{Repositorio (notebook, figuras y vectores del mejor SGNS en \texttt{vectors/sgns\_best\_d100.kv}):} \repourl
+\vspace{3pt}\textbf{Repositorio:} \repourl
 \end{document}
