@@ -1,0 +1,11 @@
+# Cachés pesadas y regenerables (se recrean ejecutando el notebook)
+artifacts/
+__pycache__/
+.ipynb_checkpoints/
+# Auxiliares de LaTeX
+informe/*.aux
+informe/*.log
+informe/*.out
+informe/*.fls
+informe/*.fdb_latexmk
+informe/*.synctex.gz
